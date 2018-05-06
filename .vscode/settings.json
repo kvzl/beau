@@ -1,0 +1,10 @@
+{
+  "jest.autoEnable": true,
+  "jest.pathToJest": "node_modules/.bin/jest",
+  "spellright.language": "en",
+  "spellright.documentTypes": [
+    "markdown",
+    "latex",
+    "plaintext"
+  ]
+}

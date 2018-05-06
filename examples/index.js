@@ -1,6 +1,6 @@
 import Beau from '../dist/beau'
 
-const vm = new Beau({
+window.vm = new Beau({
   el: '#app',
   data() {
     return {
@@ -9,7 +9,7 @@ const vm = new Beau({
   }
 })
 
-vm.observe('message', () => {
+vm.$watch('message', () => {
   console.log('message: ', vm.$data.message)
 })
 

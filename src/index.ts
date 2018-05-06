@@ -1,62 +1,68 @@
-import { BeauOptions } from './types'
+import { BeauOptions, BeauInstance } from './types'
+import Dep from './Dep'
+import Watcher from './Watcher';
 
-
-export default class Beau {
-  private signals: { [key: string]: Array<() => void> } = {}
-
+export default class Beau implements BeauInstance {
+  $options: BeauOptions = {}
+  $el?: Element
   $data: any = {}
+  data: { [key: string]: any } = {}
 
-  constructor(
-    public $options: BeauOptions
-  ) {
-    this.$data = (typeof $options.data === 'function') ? $options.data() : ($options.data || {})
-    this._observeData(this.$data)
+  constructor(options: BeauOptions = {}) {
+    this._init(options)
+  }
 
-    if ($options.el) {
-      this._parseDOM($options.el)
+  private _init(options: BeauOptions) {
+    this.$options = options
+
+    this.$data = (typeof options.data === 'function') ? options.data() : (options.data || {})
+    this._walk(this.$data)
+
+    this._proxy(this.$data)
+
+    if (options.el) {
+      this.$el = this._parseDOM(options.el)
     }
   }
 
-  observe(property: string, handler: () => void) {
-    if (!this.signals[property]) {
-      this.signals[property] = []
-    }
-    this.signals[property].push(handler)
+  $watch(property: string, handler: () => void) {
+    new Watcher(this, property, handler)
   }
 
-  private _notify(signal: string) {
-    if (!this.signals[signal] || this.signals[signal].length < 1) return
-    for (const handler of this.signals[signal]) {
-      handler()
-    }
-  }
-
-  private _observeData(obj: any) {
+  private _walk(obj: any) {
     for (const key in obj) {
       this._makeReactive(obj, key)
     }
   }
 
   private _makeReactive(obj: any, key: string) {
+    const self = this
     let data = obj[key]
+    const dep = new Dep()
+
     Object.defineProperty(obj, key, {
       enumerable: true,
       configurable: true,
-      get: () => data,
-      set: (value) => {
+      get() {
+        if (Dep.target) {
+          dep.depend()
+        }
+        return data
+      },
+      set(value) {
         data = value
-        this._notify(key)
+        dep.notify()
       }
     })
   }
 
   private _syncNode(node: Element, property: string) {
     const updateContent = () => node.textContent = this.$data[property]
-    this.observe(property, updateContent)
+    this.$watch(property, updateContent)
     updateContent()
   }
 
-  private _parseDOM(selector: string) {
+  private _parseDOM(selector: string): Element {
     const target = document.querySelector(selector)
     if (!target) {
       throw new Error(`Failed to mount: ${selector}`)
@@ -66,6 +72,23 @@ export default class Beau {
     for (const node of nodes) {
       const property = node.attributes.getNamedItem('b-text') as Attr
       this._syncNode(node, property.value as string)
+    }
+
+    return target
+  }
+
+  private _proxy(this: BeauInstance, obj: any) {
+    for (const key in obj) {
+      Object.defineProperty(this, key, {
+        configurable: false,
+        enumerable: true,
+        get() {
+          return obj[key]
+        },
+        set(value) {
+          obj[key] = value
+        }
+      })
     }
   }
 }

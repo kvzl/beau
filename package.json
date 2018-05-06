@@ -7,13 +7,15 @@
     "rollup": "rollup -c rollup.config.js",
     "build": "BUILD=production yarn rollup",
     "dev": "yarn rollup -w",
-    "test": "jest"
+    "test": "jest",
+    "cov": "jest --coverage --coverageReporters=text-lcov | coveralls"
   },
   "keywords": [],
   "author": "Kevin Liao <ucfan1784@gmail.com>",
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^22.2.3",
+    "coveralls": "^3.0.1",
     "jest": "^22.4.3",
     "rollup": "^0.58.2",
     "rollup-plugin-browsersync": "^0.2.6",

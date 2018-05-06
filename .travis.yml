@@ -2,3 +2,10 @@ language: node_js
 cache: yarn
 node_js:
   - "8"
+  - node
+
+jobs:
+  include:
+    - stage: Produce Coverage
+      node_js: node
+      script: yarn cov && rm -rf ./coverage
